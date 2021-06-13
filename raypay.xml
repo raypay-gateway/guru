@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" version="3.0" group="gurupayment" method="upgrade">
+	<name>RayPay for Guru Pro</name>
+	<description>RayPay Payment plugin for Guru Pro</description>
+	<version>1.0</version>
+	<author>Developer: hanieh729, Publisher: Saminray</author>
+	<authorUrl>https://saminray.com</authorUrl>
+	<authorEmail>info@saminray.com</authorEmail>
+	<creationDate>June 2021</creationDate>
+	<copyright>Copyright (C) 2021 RayPay</copyright>
+	<license>http://www.gnu.org/licenses/gpl-2.0.html GPLv2 or later</license>
+	<config>
+		<fields name="params"  addfieldpath="/plugins/gurupayment/fields">
+			<fieldset name="basic">
+				<field name="user_id" type="text" size="60" label="شناسه کاربری" description="لطفا شناسه کاربری خود را از پنل رای پی دریافت کنید. "/>
+				<field name="acceptor_code" type="text" size="60" label="کد پذیرنده" description="لطفا کد پذیرنده خود را از پنل رای پی دریافت کنید. "/>
+			</fieldset>
+		</fields>
+	</config>
+	<files>
+		<filename plugin="raypay">raypay.php</filename>
+	</files>
+</extension>
