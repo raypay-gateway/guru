@@ -75,22 +75,20 @@ class plgGurupaymentRayPay extends JPlugin{
 
 		$app	= JFactory::getApplication();
 		$jinput = $app->input;
-		$invoiceId = $jinput->get->get('?invoiceID', '', 'STRING');
 		$orderId = $jinput->get->get('order_id', '', 'STRING');
 
 
-		if ( empty( $invoiceId ) || empty( $orderId ) )
+		if ( empty( $orderId ) )
 		{
 			$out['pay'] = 'fail';
 			$msg = 'خطا هنگام بازگشت از درگاه پرداخت';
 			$app->redirect($cancel_return, '<h2>'.$msg.'</h2>' , $msgType='Error');
 		}
-		$data = array('order_id' => $orderId);
-		$url = 'https://api.raypay.ir/raypay/api/v1/Payment/checkInvoice?pInvoiceID=' . $invoiceId;
+		$url = 'https://api.raypay.ir/raypay/api/v1/Payment/verify';
 		$options = array('Content-Type: application/json');
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($_POST));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 		curl_setopt($ch, CURLOPT_HTTPHEADER,$options );
 		$result = curl_exec($ch);
@@ -108,14 +106,15 @@ class plgGurupaymentRayPay extends JPlugin{
 			$msg = sprintf('خطا هنگام بررسی تراکنش. کد خطا: %s - پیام خطا: %s', $http_status, $result->Message);
 			$app->redirect($cancel_return, '<h4>'.$msg.'</h4>', $msgType='Error');
 		}
-		$state           = $result->Data->State;
+		$state           = $result->Data->Status;
 		$verify_order_id = $result->Data->FactorNumber;
+		$verify_invoice_id = $result->Data->InvoiceID;
 		$verify_amount   = $result->Data->Amount;
 
 		if ( empty($verify_order_id) || empty($verify_amount) || $state !== 1 )
 		{
 			$out['pay'] = 'fail';
-			$msg  = 'پرداخت ناموفق بوده است. شناسه ارجاع بانکی رای پی : ' . $invoiceId;
+			$msg  = 'پرداخت ناموفق بوده است. شناسه ارجاع بانکی رای پی : ' . $verify_invoice_id;
 			$app->redirect($cancel_return, '<h4>'.$msg.'</h4>', $msgType='Error');
 		}
 		else
@@ -148,9 +147,10 @@ class plgGurupaymentRayPay extends JPlugin{
 			$amount = round($price,0);
 			$desc = 'خرید محصول از آموزشگاه آنلاین Guru ';
 			$invoice_id             = round(microtime(true) * 1000);
-			$callback = JURI::root().'index.php?option=com_guru&controller=guruBuy&processor='.$param['processor'].'&task='.$param['task'].'&sid='.$param['sid'].'&order_id='.$post['order_id'].'&customer_id='.intval($post['customer_id']).'&pay=wait&';
+			$callback = JURI::root().'index.php?option=com_guru&controller=guruBuy&processor='.$param['processor'].'&task='.$param['task'].'&sid='.$param['sid'].'&order_id='.$post['order_id'].'&customer_id='.intval($post['customer_id']).'&pay=wait';
 			$user_id = $params->get('user_id');
-			$acceptor_code = $params->get('acceptor_code');
+			$marketing_id = $params->get('marketing_id');
+			$sandbox = !($params->get('sandbox') == 'no');
 
 			$data = array(
 				'amount'       => strval($amount),
@@ -158,11 +158,12 @@ class plgGurupaymentRayPay extends JPlugin{
 				'userID'       => $user_id,
 				'redirectUrl'  => $callback,
 				'factorNumber' => strval($post['order_id']),
-				'acceptorCode' => $acceptor_code,
-				'comment'      => $desc
+				'marketingID' => $marketing_id,
+				'comment'      => $desc,
+				'enableSandBox'      => $sandbox
 			);
 
-			$url  = 'https://api.raypay.ir/raypay/api/v1/Payment/getPaymentTokenWithUserID';
+			$url  = 'https://api.raypay.ir/raypay/api/v1/Payment/pay';
 			$options = array('Content-Type: application/json');
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
@@ -184,17 +185,9 @@ class plgGurupaymentRayPay extends JPlugin{
 				$app->redirect($cancel_return, '<h4>'.$msg.'</h4>', $msgType='Error');
 			}
 
-		$access_token = $result->Data->Accesstoken;
-		$terminal_id  = $result->Data->TerminalID;
-
-		echo '<p style="color:#ff0000; font:18px Tahoma; direction:rtl;">در حال اتصال به درگاه بانکی. لطفا صبر کنید ...</p>';
-		echo '<form name="frmRayPayPayment" method="post" action=" https://mabna.shaparak.ir:8080/Pay ">';
-		echo '<input type="hidden" name="TerminalID" value="' . $terminal_id . '" />';
-		echo '<input type="hidden" name="token" value="' . $access_token . '" />';
-		echo '<input class="submit" type="submit" value="پرداخت" /></form>';
-		echo '<script>document.frmRayPayPayment.submit();</script>';
-
-		exit();
+		$token = $result->Data;
+		$link='https://my.raypay.ir/ipg?token=' . $token;
+		$app->redirect($link);
 	}
 
 	function getPayerPrice ($id) {

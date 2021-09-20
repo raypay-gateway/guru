@@ -13,7 +13,11 @@
 		<fields name="params"  addfieldpath="/plugins/gurupayment/fields">
 			<fieldset name="basic">
 				<field name="user_id" type="text" size="60" label="شناسه کاربری" description="لطفا شناسه کاربری خود را از پنل رای پی دریافت کنید. "/>
-				<field name="acceptor_code" type="text" size="60" label="کد پذیرنده" description="لطفا کد پذیرنده خود را از پنل رای پی دریافت کنید. "/>
+				<field name="marketing_id" type="text" size="60" label="شناسه کسب و کار" description="لطفا شناسه کسب و کار خود را از پنل رای پی دریافت کنید. "/>
+				<field name="sandbox" type="list" default="0" label="فعالسازی SandBox" description="با انتخاب این گزینه، پرداخت در محیط تست رای پی انجام می شود.">
+					<option value="yes">بله</option>
+					<option value="no">خیر</option>
+				</field>
 			</fieldset>
 		</fields>
 	</config>
